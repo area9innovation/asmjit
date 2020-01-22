@@ -235,25 +235,30 @@ struct VMemMgr::PermanentNode {
 //! \internal
 //!
 //! Helper to avoid `#ifdef`s in the code.
+#if !ASMJIT_OS_WINDOWS
 ASMJIT_INLINE uint8_t* vMemMgrAllocVMem(VMemMgr* /*self*/, size_t size, size_t* vSize) noexcept {
   uint32_t flags = OSUtils::kVMWritable | OSUtils::kVMExecutable;
-#if !ASMJIT_OS_WINDOWS
   return static_cast<uint8_t*>(OSUtils::allocVirtualMemory(size, vSize, flags));
-#else
-  return static_cast<uint8_t*>(OSUtils::allocProcessMemory(self->_hProcess, size, vSize, flags));
-#endif
 }
+#else
+ASMJIT_INLINE uint8_t* vMemMgrAllocVMem(VMemMgr* self, size_t size, size_t* vSize) noexcept {
+  uint32_t flags = OSUtils::kVMWritable | OSUtils::kVMExecutable;
+  return static_cast<uint8_t*>(OSUtils::allocProcessMemory(self->_hProcess, size, vSize, flags));
+}
+#endif
 
 //! \internal
 //!
 //! Helper to avoid `#ifdef`s in the code.
-ASMJIT_INLINE Error vMemMgrReleaseVMem(VMemMgr* /*self*/, void* p, size_t vSize) noexcept {
 #if !ASMJIT_OS_WINDOWS
+ASMJIT_INLINE Error vMemMgrReleaseVMem(VMemMgr* /*self*/, void* p, size_t vSize) noexcept {
   return OSUtils::releaseVirtualMemory(p, vSize);
-#else
-  return OSUtils::releaseProcessMemory(self->_hProcess, p, vSize);
-#endif
 }
+#else
+ASMJIT_INLINE Error vMemMgrReleaseVMem(VMemMgr* self, void* p, size_t vSize) noexcept {
+  return OSUtils::releaseProcessMemory(self->_hProcess, p, vSize);
+}
+#endif
 
 #if defined(ASMJIT_DEBUG)
 //! \internal
